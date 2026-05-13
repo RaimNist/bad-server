@@ -33,6 +33,7 @@ export type ApiListResponse<Type> = {
 class Api {
     private readonly baseUrl: string
     protected options: RequestInit
+    private csrfToken: string | null = null
 
     constructor(baseUrl: string, options: RequestInit = {}) {
         this.baseUrl = baseUrl
@@ -55,13 +56,49 @@ class Api {
 
     protected async request<T>(endpoint: string, options: RequestInit) {
         try {
+            const requestOptions = await this.withCsrfToken(options)
             const res = await fetch(`${this.baseUrl}${endpoint}`, {
                 ...this.options,
-                ...options,
+                ...requestOptions,
             })
             return await this.handleResponse<T>(res)
         } catch (error) {
             return Promise.reject(error)
+        }
+    }
+
+    private shouldUseCsrfToken(options: RequestInit) {
+        const method = options.method?.toUpperCase() || 'GET'
+        return ['POST', 'PATCH', 'PUT', 'DELETE'].includes(method)
+    }
+
+    private async getCsrfToken() {
+        if (this.csrfToken) {
+            return this.csrfToken
+        }
+
+        const res = await fetch(`${this.baseUrl}/csrf-token`, {
+            credentials: 'include',
+        })
+        const token = await res.text()
+        this.csrfToken = token
+        return token
+    }
+
+    private async withCsrfToken(options: RequestInit) {
+        if (!this.shouldUseCsrfToken(options)) {
+            return options
+        }
+
+        const token = await this.getCsrfToken()
+
+        return {
+            ...options,
+            credentials: 'include' as RequestCredentials,
+            headers: {
+                ...((options.headers as object) ?? {}),
+                'X-CSRF-Token': token,
+            },
         }
     }
 
