@@ -18,27 +18,6 @@ const normalizeLimit = (limit: unknown) => {
     return Math.min(Math.floor(parsedLimit), 10)
 }
 
-const normalizePage = (page: unknown) => {
-    const parsedPage = Number(page)
-    if (!Number.isFinite(parsedPage) || parsedPage < 1) {
-        return 1
-    }
-    return Math.floor(parsedPage)
-}
-
-const normalizeNumber = (value: unknown) => {
-    const parsedValue = Number(value)
-    return Number.isFinite(parsedValue) ? parsedValue : null
-}
-
-const customerSortFields = new Set([
-    'createdAt',
-    'lastOrderDate',
-    'totalAmount',
-    'orderCount',
-    'name',
-])
-
 const hasNestedQueryValue = (query: Request['query']) =>
     Object.values(query).some(
         (value) => typeof value === 'object' && value !== null
@@ -74,7 +53,6 @@ export const getCustomers = async (
         } = req.query
 
         const filters: FilterQuery<Partial<IUser>> = {}
-        const currentPage = normalizePage(page)
         const pageSize = normalizeLimit(limit)
 
         if (registrationDateFrom) {
@@ -110,46 +88,30 @@ export const getCustomers = async (
         }
 
         if (totalAmountFrom) {
-            const totalAmountFromValue = normalizeNumber(totalAmountFrom)
-            if (totalAmountFromValue === null) {
-                return next(new BadRequestError('РќРµРІР°Р»РёРґРЅР°СЏ СЃСѓРјРјР°'))
-            }
             filters.totalAmount = {
                 ...filters.totalAmount,
-                $gte: totalAmountFromValue,
+                $gte: Number(totalAmountFrom),
             }
         }
 
         if (totalAmountTo) {
-            const totalAmountToValue = normalizeNumber(totalAmountTo)
-            if (totalAmountToValue === null) {
-                return next(new BadRequestError('РќРµРІР°Р»РёРґРЅР°СЏ СЃСѓРјРјР°'))
-            }
             filters.totalAmount = {
                 ...filters.totalAmount,
-                $lte: totalAmountToValue,
+                $lte: Number(totalAmountTo),
             }
         }
 
         if (orderCountFrom) {
-            const orderCountFromValue = normalizeNumber(orderCountFrom)
-            if (orderCountFromValue === null) {
-                return next(new BadRequestError('РќРµРІР°Р»РёРґРЅРѕРµ С‡РёСЃР»Рѕ Р·Р°РєР°Р·РѕРІ'))
-            }
             filters.orderCount = {
                 ...filters.orderCount,
-                $gte: orderCountFromValue,
+                $gte: Number(orderCountFrom),
             }
         }
 
         if (orderCountTo) {
-            const orderCountToValue = normalizeNumber(orderCountTo)
-            if (orderCountToValue === null) {
-                return next(new BadRequestError('РќРµРІР°Р»РёРґРЅРѕРµ С‡РёСЃР»Рѕ Р·Р°РєР°Р·РѕРІ'))
-            }
             filters.orderCount = {
                 ...filters.orderCount,
-                $lte: orderCountToValue,
+                $lte: Number(orderCountTo),
             }
         }
 
@@ -172,17 +134,13 @@ export const getCustomers = async (
 
         const sort: { [key: string]: any } = {}
 
-        if (
-            typeof sortField === 'string' &&
-            customerSortFields.has(sortField) &&
-            sortOrder
-        ) {
+        if (sortField && sortOrder) {
             sort[sortField as string] = sortOrder === 'desc' ? -1 : 1
         }
 
         const options = {
             sort,
-            skip: (currentPage - 1) * pageSize,
+            skip: (Number(page) - 1) * pageSize,
             limit: pageSize,
         }
 
@@ -210,7 +168,7 @@ export const getCustomers = async (
             pagination: {
                 totalUsers,
                 totalPages,
-                currentPage,
+                currentPage: Number(page),
                 pageSize,
             },
         })

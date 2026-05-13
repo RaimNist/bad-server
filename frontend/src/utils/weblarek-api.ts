@@ -104,7 +104,7 @@ class Api {
 
     private refreshToken = () => {
         return this.request<UserResponseToken>('/auth/token', {
-            method: 'POST',
+            method: 'GET',
             credentials: 'include',
         })
     }
@@ -330,7 +330,7 @@ export class WebLarekAPI extends Api implements IWebLarekAPI {
 
     logoutUser = () => {
         return this.request<ServerResponse<unknown>>('/auth/logout', {
-            method: 'POST',
+            method: 'GET',
             credentials: 'include',
         })
     }
