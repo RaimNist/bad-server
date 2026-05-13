@@ -1,5 +1,5 @@
 # Проектная работа "WebLarek. Плохой сервер.", спринт 17
-https://github.com/RaimNist/bad-server/pull/1
+https://github.com/RaimNist/bad-server/
 Руденко Владислав Русланович
 43 Когорта
 Фулстек-разработчик
