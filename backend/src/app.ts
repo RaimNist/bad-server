@@ -28,8 +28,11 @@ app.use(urlencoded({ extended: true, limit: '100kb' }))
 app.use(json({ limit: '100kb' }))
 
 app.options('*', cors())
-app.get('/csrf-token', csrfProtection, (req, res) => {
+app.get(['/csrf-token', '/api/csrf-token'], csrfProtection, (req, res) => {
     res.send(req.csrfToken())
+})
+app.get(['/auth/csrf-token', '/api/auth/csrf-token'], csrfProtection, (req, res) => {
+    res.json({ csrfToken: req.csrfToken() })
 })
 app.use(csrfProtection)
 app.use(apiLimiter)
