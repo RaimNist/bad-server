@@ -9,24 +9,42 @@ import Product from '../models/product'
 import movingFile from '../utils/movingFile'
 import pickAllowedFields from '../utils/pickAllowedFields'
 
+const normalizePage = (page: unknown) => {
+    const parsedPage = Number(page)
+    if (!Number.isFinite(parsedPage) || parsedPage < 1) {
+        return 1
+    }
+    return Math.floor(parsedPage)
+}
+
+const normalizeLimit = (limit: unknown) => {
+    const parsedLimit = Number(limit)
+    if (!Number.isFinite(parsedLimit) || parsedLimit < 1) {
+        return 5
+    }
+    return Math.min(Math.floor(parsedLimit), 50)
+}
+
 // GET /product
 const getProducts = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { page = 1, limit = 5 } = req.query
+        const currentPage = normalizePage(page)
+        const pageSize = normalizeLimit(limit)
         const options = {
-            skip: (Number(page) - 1) * Number(limit),
-            limit: Number(limit),
+            skip: (currentPage - 1) * pageSize,
+            limit: pageSize,
         }
         const products = await Product.find({}, null, options)
         const totalProducts = await Product.countDocuments({})
-        const totalPages = Math.ceil(totalProducts / Number(limit))
+        const totalPages = Math.ceil(totalProducts / pageSize)
         return res.send({
             items: products,
             pagination: {
                 totalProducts,
                 totalPages,
-                currentPage: Number(page),
-                pageSize: Number(limit),
+                currentPage,
+                pageSize,
             },
         })
     } catch (err) {

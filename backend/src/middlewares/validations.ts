@@ -118,6 +118,14 @@ export const validateUserBody = celebrate({
     }),
 })
 
+export const validateUserUpdateBody = celebrate({
+    body: Joi.object().keys({
+        name: Joi.string().min(2).max(30),
+        email: Joi.string().email(),
+        phone: Joi.string().max(25).pattern(phoneRegExp),
+    }),
+})
+
 export const validateAuthentication = celebrate({
     body: Joi.object().keys({
         email: Joi.string()
@@ -130,5 +138,32 @@ export const validateAuthentication = celebrate({
         password: Joi.string().required().messages({
             'string.empty': 'Поле "password" должно быть заполнено',
         }),
+    }),
+})
+
+export const validateOrderNumber = celebrate({
+    params: Joi.object().keys({
+        orderNumber: Joi.number().integer().positive().required(),
+    }),
+})
+
+export const validateOrderUpdateBody = celebrate({
+    body: Joi.object().keys({
+        status: Joi.string()
+            .valid('cancelled', 'completed', 'new', 'delivering')
+            .required(),
+    }),
+})
+
+export const validateCustomerId = celebrate({
+    params: Joi.object().keys({
+        id: Joi.string()
+            .required()
+            .custom((value, helpers) => {
+                if (Types.ObjectId.isValid(value)) {
+                    return value
+                }
+                return helpers.message({ any: 'РќРµРІР°Р»РёРґРЅС‹Р№ id' })
+            }),
     }),
 })

@@ -19,6 +19,26 @@ const normalizeLimit = (limit: unknown) => {
     return Math.min(Math.floor(parsedLimit), 10)
 }
 
+const normalizePage = (page: unknown) => {
+    const parsedPage = Number(page)
+    if (!Number.isFinite(parsedPage) || parsedPage < 1) {
+        return 1
+    }
+    return Math.floor(parsedPage)
+}
+
+const normalizeNumber = (value: unknown) => {
+    const parsedValue = Number(value)
+    return Number.isFinite(parsedValue) ? parsedValue : null
+}
+
+const orderSortFields = new Set([
+    'createdAt',
+    'orderNumber',
+    'status',
+    'totalAmount',
+])
+
 const hasNestedQueryValue = (query: Request['query']) =>
     Object.values(query).some(
         (value) => typeof value === 'object' && value !== null
@@ -51,6 +71,7 @@ export const getOrders = async (
         } = req.query
 
         const filters: FilterQuery<Partial<IOrder>> = {}
+        const currentPage = normalizePage(page)
         const pageSize = normalizeLimit(limit)
 
         if (status) {
@@ -64,16 +85,24 @@ export const getOrders = async (
         }
 
         if (totalAmountFrom) {
+            const totalAmountFromValue = normalizeNumber(totalAmountFrom)
+            if (totalAmountFromValue === null) {
+                return next(new BadRequestError('РќРµРІР°Р»РёРґРЅР°СЏ СЃСѓРјРјР°'))
+            }
             filters.totalAmount = {
                 ...filters.totalAmount,
-                $gte: Number(totalAmountFrom),
+                $gte: totalAmountFromValue,
             }
         }
 
         if (totalAmountTo) {
+            const totalAmountToValue = normalizeNumber(totalAmountTo)
+            if (totalAmountToValue === null) {
+                return next(new BadRequestError('РќРµРІР°Р»РёРґРЅР°СЏ СЃСѓРјРјР°'))
+            }
             filters.totalAmount = {
                 ...filters.totalAmount,
-                $lte: Number(totalAmountTo),
+                $lte: totalAmountToValue,
             }
         }
 
@@ -135,13 +164,17 @@ export const getOrders = async (
 
         const sort: { [key: string]: any } = {}
 
-        if (sortField && sortOrder) {
+        if (
+            typeof sortField === 'string' &&
+            orderSortFields.has(sortField) &&
+            sortOrder
+        ) {
             sort[sortField as string] = sortOrder === 'desc' ? -1 : 1
         }
 
         aggregatePipeline.push(
             { $sort: sort },
-            { $skip: (Number(page) - 1) * pageSize },
+            { $skip: (currentPage - 1) * pageSize },
             { $limit: pageSize },
             {
                 $group: {
@@ -165,7 +198,7 @@ export const getOrders = async (
             pagination: {
                 totalOrders,
                 totalPages,
-                currentPage: Number(page),
+                currentPage,
                 pageSize,
             },
         })
@@ -182,9 +215,10 @@ export const getOrdersCurrentUser = async (
     try {
         const userId = res.locals.user._id
         const { search, page = 1, limit = 5 } = req.query
+        const currentPage = normalizePage(page)
         const pageSize = normalizeLimit(limit)
         const options = {
-            skip: (Number(page) - 1) * pageSize,
+            skip: (currentPage - 1) * pageSize,
             limit: pageSize,
         }
 
@@ -241,7 +275,7 @@ export const getOrdersCurrentUser = async (
             pagination: {
                 totalOrders,
                 totalPages,
-                currentPage: Number(page),
+                currentPage,
                 pageSize,
             },
         })

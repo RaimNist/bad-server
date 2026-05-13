@@ -6,6 +6,10 @@ import {
     updateCustomer,
 } from '../controllers/customers'
 import auth, { roleGuardMiddleware } from '../middlewares/auth'
+import {
+    validateCustomerId,
+    validateUserUpdateBody,
+} from '../middlewares/validations'
 import { Role } from '../models/user'
 
 const customerRouter = Router()
@@ -13,8 +17,8 @@ const customerRouter = Router()
 customerRouter.use(auth, roleGuardMiddleware(Role.Admin))
 
 customerRouter.get('/', getCustomers)
-customerRouter.get('/:id', getCustomerById)
-customerRouter.patch('/:id', updateCustomer)
-customerRouter.delete('/:id', deleteCustomer)
+customerRouter.get('/:id', validateCustomerId, getCustomerById)
+customerRouter.patch('/:id', validateCustomerId, validateUserUpdateBody, updateCustomer)
+customerRouter.delete('/:id', validateCustomerId, deleteCustomer)
 
 export default customerRouter

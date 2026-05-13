@@ -7,18 +7,18 @@ import NotFoundError from '../errors/not-found-error'
 import UnauthorizedError from '../errors/unauthorized-error'
 import UserModel, { Role } from '../models/user'
 
-// есть файл middlewares/auth.js, в нём мидлвэр для проверки JWT;
-
 const auth = async (req: Request, res: Response, next: NextFunction) => {
-    let payload: JwtPayload | null = null
     const authHeader = req.header('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
-        throw new UnauthorizedError('Невалидный токен')
+        return next(new UnauthorizedError('Invalid token'))
     }
+
     try {
-        const accessTokenParts = authHeader.split(' ')
-        const aTkn = accessTokenParts[1]
-        payload = jwt.verify(aTkn, ACCESS_TOKEN.secret) as JwtPayload
+        const [, accessToken] = authHeader.split(' ')
+        const payload = jwt.verify(
+            accessToken,
+            ACCESS_TOKEN.secret
+        ) as JwtPayload
 
         const user = await UserModel.findOne(
             {
@@ -28,23 +28,23 @@ const auth = async (req: Request, res: Response, next: NextFunction) => {
         )
 
         if (!user) {
-            return next(new ForbiddenError('Нет доступа'))
+            return next(new ForbiddenError('Access denied'))
         }
-        res.locals.user = user
 
+        res.locals.user = user
         return next()
     } catch (error) {
         if (error instanceof Error && error.name === 'TokenExpiredError') {
-            return next(new UnauthorizedError('Истек срок действия токена'))
+            return next(new UnauthorizedError('Token expired'))
         }
-        return next(new UnauthorizedError('Необходима авторизация'))
+        return next(new UnauthorizedError('Authorization required'))
     }
 }
 
 export function roleGuardMiddleware(...roles: Role[]) {
     return (_req: Request, res: Response, next: NextFunction) => {
         if (!res.locals.user) {
-            return next(new UnauthorizedError('Необходима авторизация'))
+            return next(new UnauthorizedError('Authorization required'))
         }
 
         const hasAccess = roles.some((role) =>
@@ -52,7 +52,7 @@ export function roleGuardMiddleware(...roles: Role[]) {
         )
 
         if (!hasAccess) {
-            return next(new ForbiddenError('Доступ запрещен'))
+            return next(new ForbiddenError('Access denied'))
         }
 
         return next()
@@ -68,7 +68,7 @@ export function currentUserAccessMiddleware<T>(
         const id = req.params[idProperty]
 
         if (!res.locals.user) {
-            return next(new UnauthorizedError('Необходима авторизация'))
+            return next(new UnauthorizedError('Authorization required'))
         }
 
         if (res.locals.user.roles.includes(Role.Admin)) {
@@ -78,7 +78,7 @@ export function currentUserAccessMiddleware<T>(
         const entity = await model.findById(id)
 
         if (!entity) {
-            return next(new NotFoundError('Не найдено'))
+            return next(new NotFoundError('Not found'))
         }
 
         const userEntityId = entity[userProperty] as Types.ObjectId
@@ -87,7 +87,7 @@ export function currentUserAccessMiddleware<T>(
         )
 
         if (!hasAccess) {
-            return next(new ForbiddenError('Доступ запрещен'))
+            return next(new ForbiddenError('Access denied'))
         }
 
         return next()

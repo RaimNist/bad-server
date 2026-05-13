@@ -9,7 +9,12 @@ import {
     updateOrder,
 } from '../controllers/order'
 import auth, { roleGuardMiddleware } from '../middlewares/auth'
-import { validateOrderBody } from '../middlewares/validations'
+import {
+    validateCustomerId,
+    validateOrderBody,
+    validateOrderNumber,
+    validateOrderUpdateBody,
+} from '../middlewares/validations'
 import { Role } from '../models/user'
 
 const orderRouter = Router()
@@ -21,16 +26,30 @@ orderRouter.get(
     '/:orderNumber',
     auth,
     roleGuardMiddleware(Role.Admin),
+    validateOrderNumber,
     getOrderByNumber
 )
-orderRouter.get('/me/:orderNumber', auth, getOrderCurrentUserByNumber)
+orderRouter.get(
+    '/me/:orderNumber',
+    auth,
+    validateOrderNumber,
+    getOrderCurrentUserByNumber
+)
 orderRouter.patch(
     '/:orderNumber',
     auth,
     roleGuardMiddleware(Role.Admin),
+    validateOrderNumber,
+    validateOrderUpdateBody,
     updateOrder
 )
 
-orderRouter.delete('/:id', auth, roleGuardMiddleware(Role.Admin), deleteOrder)
+orderRouter.delete(
+    '/:id',
+    auth,
+    roleGuardMiddleware(Role.Admin),
+    validateCustomerId,
+    deleteOrder
+)
 
 export default orderRouter
