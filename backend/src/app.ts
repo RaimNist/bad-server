@@ -8,6 +8,7 @@ import mongoose from 'mongoose'
 import path from 'path'
 import { DB_ADDRESS } from './config'
 import errorHandler from './middlewares/error-handler'
+import { apiLimiter } from './middlewares/rate-limit'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
 
@@ -23,14 +24,15 @@ app.use(cors())
 
 app.use(serveStatic(path.join(__dirname, 'public')))
 
-app.use(urlencoded({ extended: true }))
-app.use(json())
+app.use(urlencoded({ extended: true, limit: '100kb' }))
+app.use(json({ limit: '100kb' }))
 
 app.options('*', cors())
-app.get(['/csrf-token', '/api/csrf-token'], csrfProtection, (req, res) => {
+app.get('/csrf-token', csrfProtection, (req, res) => {
     res.send(req.csrfToken())
 })
 app.use(csrfProtection)
+app.use(apiLimiter)
 app.use(routes)
 app.use(errors())
 app.use(errorHandler)
