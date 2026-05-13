@@ -1,5 +1,0 @@
-[     197ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost/api/product?limit=20:0
-[     197ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost/api/auth/user:0
-[     225ms] [ERROR] Access to fetch at 'http://localhost/api/auth/token' from origin 'http://localhost:8081' has been blocked by CORS policy: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'. @ http://localhost:8081/:0
-[     225ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost/api/auth/token:0
-[     229ms] Object

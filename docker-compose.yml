@@ -40,7 +40,7 @@ services:
     build:
       context: nginx
     ports:
-      - 8081:80
+      - 80:80
     volumes:
       - frontend:/var/app
       - public:/var/public

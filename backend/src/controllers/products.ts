@@ -7,7 +7,6 @@ import ConflictError from '../errors/conflict-error'
 import NotFoundError from '../errors/not-found-error'
 import Product from '../models/product'
 import movingFile from '../utils/movingFile'
-import pickAllowedFields from '../utils/pickAllowedFields'
 
 // GET /product
 const getProducts = async (req: Request, res: Response, next: NextFunction) => {
@@ -92,21 +91,14 @@ const updateProduct = async (
                 join(__dirname, `../public/${process.env.UPLOAD_PATH}`)
             )
         }
-        const updateData = pickAllowedFields(req.body, [
-            'description',
-            'category',
-            'price',
-            'title',
-            'image',
-        ])
 
         const product = await Product.findByIdAndUpdate(
             productId,
             {
                 $set: {
-                    ...updateData,
-                    price: updateData.price ? updateData.price : null,
-                    image: updateData.image ? updateData.image : undefined,
+                    ...req.body,
+                    price: req.body.price ? req.body.price : null,
+                    image: req.body.image ? req.body.image : undefined,
                 },
             },
             { runValidators: true, new: true }

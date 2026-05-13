@@ -71,7 +71,7 @@ export default function AdminEditProduct() {
                 title: currentProduct.title,
             })
         }
-    }, [currentProduct, setValuesForm])
+    }, [currentProduct])
 
     const handleUpdateProduct = async () => {
         if (!selectedCategory) {

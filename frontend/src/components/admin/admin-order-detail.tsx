@@ -13,15 +13,7 @@ import { ordersActions } from '../../services/slice/orders'
 import { getOrderByNumber } from '../../services/slice/orders/thunk'
 import { adapterOrderFromServer } from '../../utils/adapterOrderFromServer'
 import { Preloader } from '../preloader'
-import DOMPurify from 'dompurify'
-
 import styles from './admin.module.scss'
-
-const sanitizeComment = (comment: string) =>
-    DOMPurify.sanitize(comment, {
-        ALLOWED_TAGS: ['p', 'br', 'b', 'strong', 'i', 'em', 'ul', 'ol', 'li'],
-        ALLOWED_ATTR: [],
-    })
 
 const ActionsButton = () => {
     const number = useParams().number || ''
@@ -111,7 +103,7 @@ export default function AdminOrderDetail() {
                     <>
                         <div
                             dangerouslySetInnerHTML={{
-                                __html: sanitizeComment(dataInfo.comment),
+                                __html: dataInfo.comment,
                             }}
                         />
                     </>
@@ -132,7 +124,7 @@ export default function AdminOrderDetail() {
                 extraClass: styles.admin__gridRowFullWidth,
             },
         ],
-        [navigate, orderData]
+        [orderData]
     )
 
     if (!orderData) {

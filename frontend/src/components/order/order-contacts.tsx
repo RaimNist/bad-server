@@ -38,7 +38,7 @@ export function OrderContacts() {
             email: orderPersistData.email,
             phone: orderPersistData.phone,
         })
-    }, [orderPersistData, setValuesForm])
+    }, [orderPersistData])
 
     const handleEditInputChange = (value: string) => {
         setValuesForm({ ...values, comment: value })

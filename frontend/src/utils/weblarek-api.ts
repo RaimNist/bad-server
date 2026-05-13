@@ -80,6 +80,11 @@ class Api {
         const res = await fetch(`${this.baseUrl}/csrf-token`, {
             credentials: 'include',
         })
+        if (!res.ok) {
+            throw new Error(
+                `Получение CSRF токена не удалось: ${res.status} ${res.statusText}`
+            )
+        }
         const token = await res.text()
         this.csrfToken = token
         return token

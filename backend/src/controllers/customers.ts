@@ -3,11 +3,6 @@ import { FilterQuery } from 'mongoose'
 import NotFoundError from '../errors/not-found-error'
 import Order from '../models/order'
 import User, { IUser } from '../models/user'
-import pickAllowedFields from '../utils/pickAllowedFields'
-import escapeRegExp from '../utils/escapeRegExp'
-
-const normalizeSearch = (search: unknown) =>
-    escapeRegExp(String(search).slice(0, 100))
 
 // TODO: Добавить guard admin
 // eslint-disable-next-line max-len
@@ -97,7 +92,7 @@ export const getCustomers = async (
         }
 
         if (search) {
-            const searchRegex = new RegExp(normalizeSearch(search), 'i')
+            const searchRegex = new RegExp(search as string, 'i')
             const orders = await Order.find(
                 {
                     $or: [{ deliveryAddress: searchRegex }],
@@ -184,17 +179,11 @@ export const updateCustomer = async (
     next: NextFunction
 ) => {
     try {
-        const updateData = pickAllowedFields(req.body, [
-            'email',
-            'name',
-            'phone',
-        ])
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id,
-            updateData,
+            req.body,
             {
                 new: true,
-                runValidators: true,
             }
         )
             .orFail(

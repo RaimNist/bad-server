@@ -35,7 +35,7 @@ export function OrderAddress() {
             address: orderPersistData.address,
             payment: PaymentType.Online,
         })
-    }, [orderPersistData, setValuesForm])
+    }, [orderPersistData])
 
     const nextStep = () => {
         setInfo(values)

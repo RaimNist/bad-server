@@ -1,11 +1,10 @@
 import { existsSync, mkdirSync, rename } from 'fs'
-import { basename } from 'path'
-import { resolveInside } from './safePublicPath'
+import { basename, join } from 'path'
 
 function movingFile(imagePath: string, from: string, to: string) {
     const fileName = basename(imagePath)
-    const imagePathTemp = resolveInside(from, fileName)
-    const imagePathPermanent = resolveInside(to, fileName)
+    const imagePathTemp = join(from, fileName)
+    const imagePathPermanent = join(to, fileName)
 
     mkdirSync(to, { recursive: true })
     if (!existsSync(imagePathTemp)) {
