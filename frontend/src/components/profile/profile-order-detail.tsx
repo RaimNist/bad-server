@@ -10,7 +10,14 @@ import { selectOrderByNumber } from '../../services/selector'
 import { getCurrentUserOrderByNumber } from '../../services/slice/profile-orders/thunk'
 import { adapterOrderFromServer } from '../../utils/adapterOrderFromServer'
 import { Preloader } from '../preloader'
+import DOMPurify from 'dompurify'
 import styles from './profile.module.scss'
+
+const sanitizeComment = (comment: string) =>
+    DOMPurify.sanitize(comment, {
+        ALLOWED_TAGS: ['p', 'br', 'b', 'strong', 'i', 'em', 'ul', 'ol', 'li'],
+        ALLOWED_ATTR: [],
+    })
 
 const CloseButton = () => {
     const navigate = useNavigate()
@@ -73,7 +80,7 @@ export default function ProfileOrderDetail() {
                         {dataInfo.comment ? (
                             <div
                                 dangerouslySetInnerHTML={{
-                                    __html: dataInfo.comment,
+                                    __html: sanitizeComment(dataInfo.comment),
                                 }}
                             />
                         ) : (

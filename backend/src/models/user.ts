@@ -1,9 +1,9 @@
 /* eslint-disable no-param-reassign */
+import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import mongoose, { Document, HydratedDocument, Model, Types } from 'mongoose'
 import validator from 'validator'
-import md5 from 'md5'
 
 import { ACCESS_TOKEN, REFRESH_TOKEN } from '../config'
 import UnauthorizedError from '../errors/unauthorized-error'
@@ -117,7 +117,7 @@ const userSchema = new mongoose.Schema<IUser, IUserModel, IUserMethods>(
 userSchema.pre('save', async function hashingPassword(next) {
     try {
         if (this.isModified('password')) {
-            this.password = md5(this.password)
+            this.password = await bcrypt.hash(this.password, 10)
         }
         next()
     } catch (error) {
@@ -175,10 +175,10 @@ userSchema.statics.findUserByCredentials = async function findByCredentials(
     email: string,
     password: string
 ) {
-    const user = await this.findOne({ email })
+    const user = await this.findOne({ email: String(email) })
         .select('+password')
         .orFail(() => new UnauthorizedError('Неправильные почта или пароль'))
-    const passwdMatch = md5(password) === user.password
+    const passwdMatch = await bcrypt.compare(String(password), user.password)
     if (!passwdMatch) {
         return Promise.reject(
             new UnauthorizedError('Неправильные почта или пароль')
