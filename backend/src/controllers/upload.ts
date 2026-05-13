@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
+import { unlink } from 'fs'
 import { constants } from 'http2'
 import BadRequestError from '../errors/bad-request-error'
 
@@ -11,6 +12,11 @@ export const uploadFile = async (
         return next(new BadRequestError('Файл не загружен'))
     }
     try {
+        if (req.file.size <= 2 * 1024) {
+            unlink(req.file.path, () => {})
+            return next(new BadRequestError('File is too small'))
+        }
+
         const fileName = process.env.UPLOAD_PATH
             ? `/${process.env.UPLOAD_PATH}/${req.file.filename}`
             : `/${req.file?.filename}`

@@ -56,6 +56,7 @@ export default multer({
     storage,
     fileFilter,
     limits: {
+        fieldSize: 2 * 1024,
         fileSize: 5 * 1024 * 1024,
         files: 1,
     },

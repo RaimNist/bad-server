@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import { FilterQuery } from 'mongoose'
+import BadRequestError from '../errors/bad-request-error'
 import NotFoundError from '../errors/not-found-error'
 import Order from '../models/order'
 import User, { IUser } from '../models/user'
@@ -8,6 +9,19 @@ import escapeRegExp from '../utils/escapeRegExp'
 
 const normalizeSearch = (search: unknown) =>
     escapeRegExp(String(search).slice(0, 100))
+
+const normalizeLimit = (limit: unknown) => {
+    const parsedLimit = Number(limit)
+    if (!Number.isFinite(parsedLimit) || parsedLimit < 1) {
+        return 10
+    }
+    return Math.min(Math.floor(parsedLimit), 10)
+}
+
+const hasNestedQueryValue = (query: Request['query']) =>
+    Object.values(query).some(
+        (value) => typeof value === 'object' && value !== null
+    )
 
 // TODO: Добавить guard admin
 // eslint-disable-next-line max-len
@@ -18,6 +32,10 @@ export const getCustomers = async (
     next: NextFunction
 ) => {
     try {
+        if (hasNestedQueryValue(req.query)) {
+            return next(new BadRequestError('РќРµРІР°Р»РёРґРЅС‹Рµ РїР°СЂР°РјРµС‚СЂС‹ Р·Р°РїСЂРѕСЃР°'))
+        }
+
         const {
             page = 1,
             limit = 10,
@@ -35,6 +53,7 @@ export const getCustomers = async (
         } = req.query
 
         const filters: FilterQuery<Partial<IUser>> = {}
+        const pageSize = normalizeLimit(limit)
 
         if (registrationDateFrom) {
             filters.createdAt = {
@@ -121,8 +140,8 @@ export const getCustomers = async (
 
         const options = {
             sort,
-            skip: (Number(page) - 1) * Number(limit),
-            limit: Number(limit),
+            skip: (Number(page) - 1) * pageSize,
+            limit: pageSize,
         }
 
         const users = await User.find(filters, null, options).populate([
@@ -142,7 +161,7 @@ export const getCustomers = async (
         ])
 
         const totalUsers = await User.countDocuments(filters)
-        const totalPages = Math.ceil(totalUsers / Number(limit))
+        const totalPages = Math.ceil(totalUsers / pageSize)
 
         res.status(200).json({
             customers: users,
@@ -150,7 +169,7 @@ export const getCustomers = async (
                 totalUsers,
                 totalPages,
                 currentPage: Number(page),
-                pageSize: Number(limit),
+                pageSize,
             },
         })
     } catch (error) {
