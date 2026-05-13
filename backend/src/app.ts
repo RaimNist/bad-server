@@ -15,7 +15,8 @@ import routes from './routes'
 const { PORT = 3000 } = process.env
 const app = express()
 const tokens = new Tokens()
-const csrfCookieName = 'csrfSecret'
+const csrfCookieName = '_csrf'
+const csrfFieldName = '_csrf'
 const corsOptions = {
     origin: 'http://localhost:5173',
     credentials: true,
@@ -36,9 +37,14 @@ const csrfProtection = (req: Request, res: Response, next: NextFunction) => {
     }
 
     const secret = req.cookies[csrfCookieName]
-    const token = req.header('X-CSRF-Token')
+    const token =
+        req.header('CSRF-Token') ||
+        req.header('X-CSRF-Token') ||
+        req.header('X-XSRF-Token') ||
+        req.body?.[csrfFieldName] ||
+        req.query?.[csrfFieldName]
 
-    if (!secret || !token || !tokens.verify(secret, token)) {
+    if (typeof token !== 'string' || !secret || !tokens.verify(secret, token)) {
         return res.status(403).json({ message: 'Invalid CSRF token' })
     }
 
